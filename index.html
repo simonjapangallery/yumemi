@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>SIMON JAPAN GALLERY — 夢み中</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400&family=EB+Garamond:ital@0;1&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    background:#fdfcfa;
+    font-family:'Noto Serif JP', serif;
+    color:#2a2a2a;
+    height:100%;
+    overflow-y:auto;
+    overflow-anchor:none;
+  }
+  body {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:100%;
+    padding:70px 0 40px;
+  }
+  .stage {
+    max-width:720px;
+    width:100%;
+    text-align:center;
+  }
+
+  .imgs-wrap {
+    width:100%;
+  }
+  .imgs {
+    display:flex;
+    flex-direction:row;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    width:100%;
+    height:52vh;
+    scrollbar-width:none;
+  }
+  .imgs::-webkit-scrollbar { display:none; }
+  .imgs .slide {
+    flex:0 0 100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    scroll-snap-align:center;
+    padding:0 24px;
+  }
+  .imgs .slide img {
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    border-radius:2px;
+    box-shadow:0 6px 30px rgba(0,0,0,0.08);
+  }
+
+  .nav-row {
+    margin-top:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+  .nav-arrow {
+    width:22px;
+    height:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+    color:#c2bcaf;
+    transition:color .3s ease, opacity .3s ease;
+    user-select:none;
+  }
+  .nav-arrow:hover { color:#5a5347; }
+  .nav-arrow.hidden { opacity:0.25; pointer-events:none; }
+
+  .dots {
+    display:flex;
+    justify-content:center;
+    gap:7px;
+  }
+  .dots span {
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#e3ddd0;
+    transition:background .3s ease;
+  }
+  .dots span.active { background:#b0aa9e; }
+
+  .swipe-hint {
+    margin-top:10px;
+    font-size:10px;
+    letter-spacing:0.1em;
+    color:#cac4b7;
+  }
+
+  .caption {
+    margin-top:24px;
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    letter-spacing:0.1em;
+    color:#b0aa9e;
+  }
+  .story-toggle {
+    margin-top:22px;
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:#c2bcaf;
+    cursor:pointer;
+    border-bottom:1px solid #e3ddd0;
+    padding-bottom:2px;
+    transition:color .3s ease;
+    background:none;
+    font-family:'Noto Serif JP', serif;
+  }
+  .story-toggle:hover { color:#8a8374; }
+  .story-text {
+    max-width:440px;
+    margin:22px auto 0;
+    padding:0 24px;
+    font-size:14px;
+    line-height:2.1;
+    color:#5a5347;
+    letter-spacing:0.03em;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height 1.2s ease, opacity 1.2s ease;
+    white-space:pre-line;
+  }
+  .story-text.open { max-height:600px; opacity:1; }
+
+  .lang-switch {
+    position:fixed;
+    top:22px;
+    right:24px;
+    display:flex;
+    gap:8px;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:#c2bcaf;
+  }
+  .lang-switch span {
+    cursor:pointer;
+    padding-bottom:1px;
+    transition:color .3s ease;
+  }
+  .lang-switch span.active {
+    color:#5a5347;
+    border-bottom:1px solid #5a5347;
+  }
+  .lang-switch span:hover { color:#8a8374; }
+
+  .brand {
+    position:fixed;
+    top:24px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:#c9c3b6;
+  }
+  .again {
+    margin-top:36px;
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:#b0aa9e;
+    cursor:pointer;
+    border:1px solid #e3ddd0;
+    padding:10px 22px;
+    border-radius:20px;
+    background:none;
+    font-family:'Noto Serif JP', serif;
+    transition:all .3s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+  }
+  .again:hover { border-color:#b0aa9e; color:#5a5347; }
+  .again-icon {
+    display:inline-block;
+    font-size:13px;
+    line-height:1;
+    transition:transform .5s ease;
+  }
+  .again:hover .again-icon { transform:rotate(180deg); }
+
+  /* Shown only when a specific piece is opened via QR code (?piece=xxx) */
+  .pinned-note {
+    margin-top:14px;
+    font-size:10px;
+    letter-spacing:0.12em;
+    color:#cac4b7;
+  }
+  .pinned-note a {
+    color:#b0aa9e;
+    text-decoration:none;
+    border-bottom:1px solid #e3ddd0;
+  }
+  .pinned-note a:hover { color:#5a5347; }
+</style>
+</head>
+<body>
+
+<div class="brand">SIMON JAPAN GALLERY</div>
+<div class="lang-switch">
+  <span id="langJa" class="active">JP</span>
+  <span id="langEn">EN</span>
+</div>
+
+<div class="stage" id="stage">
+  <div class="imgs-wrap">
+    <div class="imgs" id="imgs"></div>
+  </div>
+  <div class="nav-row">
+    <span class="nav-arrow prev" id="prevArrow">‹</span>
+    <div class="dots" id="dots"></div>
+    <span class="nav-arrow next" id="nextArrow">›</span>
+  </div>
+  <div class="swipe-hint" id="swipeHint"></div>
+  <div class="caption" id="caption"></div>
+  <div class="story-toggle" id="storyToggle"></div>
+  <div class="story-text" id="storyText"></div>
+  <div class="pinned-note" id="pinnedNote"></div>
+</div>
+
+<button class="again" id="again">
+  <span class="again-icon">⟳</span>
+  <span id="againText"></span>
+</button>
+
+<script>
+/*
+  ============================================================
+  作品を追加する方法（コードに詳しくなくても、この手順だけ覚えれば大丈夫です）
+
+  1. images/ フォルダに、新しい作品の写真を追加する
+     ファイル名は「作品キー_1.jpg」「作品キー_2.jpg」「作品キー_3.jpg」
+     （例：新作のキーを "kagerou" にするなら kagerou_1.jpg, kagerou_2.jpg, kagerou_3.jpg）
+
+  2. 下の IMAGE_KEYS の配列に、その作品キーを追加する
+
+  3. さらに下の dreams 配列に、その作品のキャプション・ストーリー（JP/EN）を
+     ひとつのオブジェクトとしてコピー＆ペーストで追加する
+     （key は images と同じ名前にすること）
+
+  これで、QRコードは https://（このサイトのURL）/?piece=作品キー
+  という形で、その作品に直接リンクできます。
+  ============================================================
+*/
+
+// 各作品につき何枚の画像を使うか（1枚だけの作品も後で作れるように、作品ごとに配列で管理）
+const IMAGE_KEYS = [
+  'membrane','neon','alice','mold','oldmirror','eyes','phantom','milkyway',
+  'kotosen','faintlight','whatif','timecapsule','treeoflife','summernight',
+  'twomoons','byakko','illumination','green','glass','face','comet',
+  'ferment','freehole'
+];
+
+const DATA = {};
+IMAGE_KEYS.forEach(key => {
+  DATA[key + '_1'] = 'images/' + key + '_1.jpg';
+  DATA[key + '_2'] = 'images/' + key + '_2.jpg';
+  DATA[key + '_3'] = 'images/' + key + '_3.jpg';
+});
+
+let lang = 'ja';
+
+const ui = {
+  ja: { toggleClosed: '夢の話を、そっと読む', toggleOpen: '閉じる', again: '次へ', swipeHint: '← スワイプ、または矢印で次の写真へ →', pinned: 'この物語だけを見ています。 ' , pinnedLink: 'すべての夢を見る' },
+  en: { toggleClosed: 'Quietly read the dream', toggleOpen: 'Close', again: 'Next', swipeHint: '← Swipe, or use the arrows →', pinned: 'You are viewing a single story. ', pinnedLink: 'See all dreams' }
+};
+
+const dreams = [
+  {
+    key: 'green',
+    caption: { ja:'ティンカーベル', en:'Tinkerbell' },
+    story: {
+      ja:'夜の闇の中、ひときわ輝く一匹の蛾。魔法の粉を振りまくかのようにキラキラと光りを放ちながら飛んでいる。その小さな生き物は、あたりを幻想的な光で照らし出し、不思議な世界へと誘う。そして、彼女は優しく囁く「私はティンカーベルよ」。',
+      en:'In the darkness of night, one moth shines above all. She flies scattering sparks of light, as if sprinkling magic dust. This small creature lights the air around her with an enchanted glow, drawing everything into a world of wonder. And she whispers softly, "I am Tinkerbell."'
+    },
+    images: [ {src:DATA.green_1,detail:false}, {src:DATA.green_2,detail:true}, {src:DATA.green_3,detail:true} ]
+  },
+  {
+    key: 'glass',
+    caption: { ja:'薄幸', en:'Hakkou — A Fragile Fate' },
+    story: {
+      ja:'薄幸の運命を選んだ彼女の心は、クリスタルのように透明で壊れやすい。光を一身に浴びると、その内部に幻想的なきらめきを放ち、見る者を虜にする。しかし、その美しさは同時に危うさを孕んでおり、ほんのわずかな衝撃で粉々に砕け散る恐れがある。彼女の極限の輝きは、未来や過去ではなく、今一瞬の為にある。',
+      en:'Her heart, having chosen a fate of quiet sorrow, is as transparent and fragile as crystal. Bathed fully in light, it casts a fantastical shimmer from within, captivating all who see it. And it is precisely this fragility that makes her glow so fiercely — for the faintest shock could shatter her into pieces. Her utmost brilliance belongs neither to the future nor the past, but only to this single, fleeting moment.'
+    },
+    images: [ {src:DATA.glass_1,detail:false}, {src:DATA.glass_2,detail:true}, {src:DATA.glass_3,detail:true} ]
+  },
+  {
+    key: 'face',
+    caption: { ja:'付喪神', en:'Tsukumogami' },
+    story: {
+      ja:'古い家の部屋の隅で、静かに息を潜める埃っぽい場所。そこには、もこもこと光るカビの菌が生息し、埃の精霊がひっそりと住まう。付喪神。古びたものたちに、新たな命が宿る。時間の経過と共に培われた、見えない力が、家具一つ一つ、本棚の隅に忘れ去られた古書にまで息づいている。古いもの、そのすべての一部に小さな精霊が宿る。彼らは人目につかないように、しかし確実に、この場所の物語を見守り続けている。夜が更けるにつれ、彼らのささやきが部屋に静かに響き渡る。それは、古いものたちが今もなお生き、物語を未来へ伝えようとしている証しである。',
+      en:'In the corner of an old house, a dusty place holds its breath in silence. There, softly glowing mold spores live, and small spirits of dust quietly dwell. Tsukumogami. A new life stirs within things grown old. An unseen force, gathered slowly over time, breathes even into the corners of the bookshelf, into forgotten old books, into every piece of furniture. Within every fragment of what is old, a small spirit resides. Unseen, yet certain, they keep watch over the stories of this place. As night deepens, their whispers echo quietly through the room — proof that old things are still alive, still carrying their stories forward.'
+    },
+    images: [ {src:DATA.face_1,detail:false}, {src:DATA.face_2,detail:true}, {src:DATA.face_3,detail:true} ]
+  },
+  {
+    key: 'comet',
+    caption: { ja:'星へ', en:'Toward the Star' },
+    story: {
+      ja:'光の速度で進む、一艘の宇宙船。その名は、地球という。\n\n太陽系と共に、途方もない速さで、この星は旅をしている。次の目的地は、こと座のベガ。そこには、地球によく似た星があるのだという。\n\n地球は今、もう一人の自分と出会うため、長い旅の途中にある。',
+      en:'A ship, traveling at the speed of light. Its name is Earth.\n\nTogether with the solar system, this star journeys on at an unimaginable speed. Its next destination: Vega, in the constellation Lyra. There, they say, lies a star much like our own.\n\nEarth is now in the midst of a long journey — to meet another version of itself.'
+    },
+    images: [ {src:DATA.comet_1,detail:false}, {src:DATA.comet_2,detail:true}, {src:DATA.comet_3,detail:true} ]
+  },
+  {
+    key: 'ferment',
+    caption: { ja:'発酵', en:'Fermentation' },
+    story: {
+      ja:'最初の一筆は、白いキャンバスに置かれる。静寂の中、色がゆっくりと広がっていく。しばらくすると、また新しい層が重なる。層が積み重なるほど、色は勝手に混ざり合い、思いがけない形が生まれていく。\n\nやがて色たちは、ある層から別の層へと勝手に動き出す。これは画家の意図とは、ほとんど関係がない。絵の具の方が、キャンバスの上で好き勝手に物語を紡ぎはじめる。\n\n時間のかかる作業だが、この「待つ時間」こそが、発酵に欠かせない。色がゆっくり混ざり合ううちに、絵はいつのまにか、自分で自分を描きはじめている。\n\n画家がすることといえば、せいぜい、タイトルと値段をつけるくらいのものだ。',
+      en:'The first stroke lands on a blank canvas. In silence, color slowly spreads. Before long, another layer joins it. The more layers pile up, the more the colors mix on their own, taking on shapes no one quite intended.\n\nEventually the colors start moving by themselves, drifting from one layer into another. This has almost nothing to do with the painter\'s intentions. The paint just goes ahead and writes its own story across the canvas.\n\nIt takes time — but that waiting is exactly what fermentation needs. As the colors slowly mingle, the painting starts, somehow, painting itself.\n\nAll the painter really does is add a title and a price tag, at the end.'
+    },
+    images: [ {src:DATA.ferment_1,detail:false}, {src:DATA.ferment_2,detail:true}, {src:DATA.ferment_3,detail:true} ]
+  },
+  {
+    key: 'freehole',
+    caption: { ja:'フリーホール', en:'Free Hole' },
+    story: {
+      ja:'心は、ゆるやかに曲がりながら、輪郭を描いていく。ひとつひとつが重なり合い、時に溶け合い、新しい形になる。\n\nその中心から、光の道が現れる。輝きの向こうには、ここではない場所がある。時間も、空間も、少しだけ違う規則で動いている場所。\n\nその光のトンネルを抜けると、知らなかったことに出会う。限界はどこにもない。\n\nけれど、これは片道の切符ではない。何度でも通り抜けられる。持ち帰ったものは、そのままこちらの世界の宝物になる。',
+      en:'The heart curves gently, drawing its own outline. Pieces overlap, at times melting into one another, becoming something new.\n\nFrom its center, a path of light appears. Beyond the glow lies somewhere else — a place where time and space move by slightly different rules.\n\nPassing through that tunnel of light, you meet what you didn\'t know before. There is no edge to it.\n\nBut this is no one-way ticket. You can pass through it again and again. Whatever you carry back becomes a treasure in this world, too.'
+    },
+    images: [ {src:DATA.freehole_1,detail:false}, {src:DATA.freehole_2,detail:true}, {src:DATA.freehole_3,detail:true} ]
+  },
+  {
+    key: 'illumination',
+    caption: { ja:'走馬灯', en:'Zoetrope' },
+    story: {
+      ja:'それぞれのリズムで点滅する、無数の光たち。その光と影のコントラストが、まるでひとつのスクリーンのように、壮大な像を映し出していく。\n\nその前を、一匹の馬が走り抜けていく。クリスタルのように透きとおった体に、光が幾重にも映り込み、眩しいほどの輝きをまとって通り過ぎていく。\n\nまるで、夢のように。',
+      en:'Countless lights blink, each at its own rhythm. The contrast of light and shadow unfolds like a single screen, casting a vast image across the dark.\n\nBefore it, a horse runs through. Its body, transparent as crystal, catches the lights again and again, and it passes by wrapped in a dazzling glow.\n\nJust like a dream.'
+    },
+    images: [ {src:DATA.illumination_1,detail:false}, {src:DATA.illumination_2,detail:true}, {src:DATA.illumination_3,detail:true} ]
+  },
+  {
+    key: 'byakko',
+    caption: { ja:'白虹', en:'White Rainbow' },
+    story: {
+      ja:'大地は心地よく眠りにつき、その鼓動は振動の波となって広がります。静寂の中、突然現れる白虹が波紋を描き出し、周囲に穏やかな振動を送り出します。\n\nこの振動は音波となり、見えない信号として世界を優しく包み込みます。それは自然のリズムと調和し、すべての生命に静かなメッセージを伝えます。\n\n大地の呼吸と共に、波紋はゆっくりと広がり続け、草の露から赤ちゃんの産毛まで、隅々に触れながら、すべての生命に祝福をもたらします。',
+      en:"The earth settles into a gentle sleep, its heartbeat spreading outward in waves. In the stillness, a white rainbow appears without warning, drawing ripples across the quiet and sending a soft vibration through everything around it.\n\nThat vibration becomes a sound wave, an invisible signal gently enfolding the world. It moves in time with nature's own rhythm, carrying a quiet message to every living thing.\n\nWith the breath of the earth, the ripples keep spreading \u2014 touching the dew on a blade of grass, the down on a newborn's skin \u2014 reaching into every corner, and leaving behind a blessing for all that lives."
+    },
+    images: [ {src:DATA.byakko_1,detail:false}, {src:DATA.byakko_2,detail:true}, {src:DATA.byakko_3,detail:true} ]
+  },
+  {
+    key: 'twomoons',
+    caption: { ja:'二つの月', en:'Two Moons' },
+    story: {
+      ja:'夕暮れ時、姿を現す若い月と、湖面に映る月の揺れ。空と水面に、二つの月が同時に浮かぶ時、金星が瞬きを始める。\n\n水面の月は近いが手に触れることはできず、空の月は果てしなく遠い。美しく染まる景色が夢心地な期待を抱かせる。\n\n夕焼けの空と湖との間に、曖昧な境界と、静かな淡い予感を見る。',
+      en:'At dusk, a young moon comes into view, its reflection trembling on the lake. As two moons float at once \u2014 one in the sky, one on the water \u2014 Venus begins to flicker.\n\nThe moon on the water is close, but it cannot be touched. The moon in the sky is endlessly far. Still, the color deepening across the sky stirs a dreamlike, wistful hope.\n\nBetween the burning sky and the lake, a boundary blurs, and a quiet, pale premonition lingers.'
+    },
+    images: [ {src:DATA.twomoons_1,detail:false}, {src:DATA.twomoons_2,detail:true}, {src:DATA.twomoons_3,detail:true} ]
+  },
+  {
+    key: 'summernight',
+    caption: { ja:'夏の夜', en:'Summer Night' },
+    story: {
+      ja:'夏の夜、静かな闇が広がる中、息づく草花から、小さな精霊たちの囁きのように、ほんのりとした淡い光が放たれます。それはとても繊細な命の光で、空気中を漂いながら舞い上がります。\n\n見るという動作だけでは足らぬほど、微細な光子が、一瞬のうちに周囲の空間を神秘的な美しさで満たします。\n\nそれは夏の夜が見ている静寂で繊細な夢の瞬きです。',
+      en:'On a summer night, in the quiet, spreading dark, a faint glow rises from the breathing grass and flowers, like the whispering of small spirits. It is a delicate light of life, drifting and rising through the air.\n\nIt is more than watching alone can take in \u2014 in an instant, these minute photons fill the space around with a mysterious beauty.\n\nThis is the quiet, delicate flicker of a dream, the one the summer night itself is watching.'
+    },
+    images: [ {src:DATA.summernight_1,detail:false}, {src:DATA.summernight_2,detail:true}, {src:DATA.summernight_3,detail:true} ]
+  },
+  {
+    key: 'treeoflife',
+    caption: { ja:'生命の樹', en:'Tree of Life' },
+    story: {
+      ja:'深い森の奥に、幻の中に佇む不思議な木があります。しなやかな枝葉を伸ばし、太陽の光を浴びて輝くその木には守り神の蛇が住んでいます。音もなく枝を這う蛇は、その鱗が宝石のように光り輝き、訪れる者を深い魅力で惹きつけます。\n\n木の生命力から生まれた泡は、シャボンのように輝きながらゆっくりと空へと登り、風に乗って遠くへと旅を続けます。それぞれの泡は、儚く美しい夢の瞬間を映し出します。\n\nこの不思議な森の中で、夢は現実に触れ、現実は夢に変わります。',
+      en:"Deep in the forest, as if within a vision, stands a strange and wondrous tree. Its supple branches and leaves reach outward, shining as they catch the sunlight, and within it lives a guardian serpent. Moving without a sound along the branches, its scales glimmer like jewels, drawing in all who come near with a deep, quiet allure.\n\nBubbles born from the tree's own life force rise slowly into the sky, shimmering like soap bubbles, carried off on the wind to travel far. Each one reflects a fleeting, beautiful moment of a dream.\n\nIn this strange forest, dreams touch reality, and reality turns into dream."
+    },
+    images: [ {src:DATA.treeoflife_1,detail:false}, {src:DATA.treeoflife_2,detail:true}, {src:DATA.treeoflife_3,detail:true} ]
+  },
+  {
+    key: 'timecapsule',
+    caption: { ja:'タイムカプセル', en:'Time Capsule' },
+    story: {
+      ja:'深い土の奥深く、長い眠りからゆっくりと目覚める種があります。硬い皮が土から水分を吸い上げると、種は何かを思い出したかのように、目覚めの予感に身を任せます。目覚めかけた記憶の残像を頼りに、ゆっくりと目を開け始めます。\n\n土の中で静かに時が流れる中、この細やかなタイムカプセルはかつて感じた光の感触を思い出しながら、新たな感覚を求めて動き出します。\n\nやがて、その種はすべての重さを押しのけ、土の表面へと這い上がります。それは、目覚めたばかりの新たな命が、静かに光へと向かう旅の始まりです。',
+      en:'Deep within the earth, a seed slowly wakes from a long sleep. As its hard shell draws moisture from the soil around it, the seed, as if remembering something, gives itself over to the promise of waking. Guided by the fading afterimage of that half-remembered memory, it slowly begins to open its eyes.\n\nAs time passes quietly within the earth, this small time capsule recalls the touch of a light it once felt, and stirs, reaching for a new sensation.\n\nIn time, the seed pushes past all that weight and climbs toward the surface of the earth. This is the beginning of a journey \u2014 a newly awakened life, quietly making its way toward the light.'
+    },
+    images: [ {src:DATA.timecapsule_1,detail:false}, {src:DATA.timecapsule_2,detail:true}, {src:DATA.timecapsule_3,detail:true} ]
+  },
+  {
+    key: 'whatif',
+    caption: { ja:'もし', en:'What If' },
+    story: {
+      ja:'もし「彼」ではなく「彼女」だったら。\n母のような無性の愛で隣人を愛せるだろうか。\nこの人生は苦行ではなく喜びだと感じられるだろうか。\n罪を償うことより存在を祝福し自分を認められるだろうか。\n「彼」であること。それごと海のような愛で満たせるだろうか。',
+      en:'What if \u201che\u201d had been \u201cshe\u201d?\nCould I love my neighbor with a mother\u2019s selfless love?\nCould I feel that this life is joy, not penance?\nCould I bless my own existence and accept myself, rather than atoning for sin?\nBeing \u201che\u201d \u2014 could even that be filled with a love as vast as the sea?'
+    },
+    images: [ {src:DATA.whatif_1,detail:false}, {src:DATA.whatif_2,detail:true}, {src:DATA.whatif_3,detail:true} ]
+  },
+  {
+    key: 'faintlight',
+    caption: { ja:'薄光', en:'Faint Light' },
+    story: {
+      ja:'静寂に包まれた薄暗い部屋で、カーテン越しにぼんやりとした光が差し込む。その光の帯は柔らかく、部屋の隅まで静かに届けられている。部屋は徐々に闇に染まり始める。\n\n目を閉じ、ゆっくりと長い息を吐く。ひと息ごとに、部屋はまた少し暗くなっていく。この呼吸が、カーテンの光を揺らさぬように。',
+      en:"In a dim room wrapped in silence, a faint light filters in through the curtain. That band of light is soft, reaching quietly into every corner of the room. Little by little, the room begins to darken.\n\nI close my eyes and slowly let out a long breath. With each breath, the room grows a little darker \u2014 so that it won't disturb the light at the curtain."
+    },
+    images: [ {src:DATA.faintlight_1,detail:false}, {src:DATA.faintlight_2,detail:true}, {src:DATA.faintlight_3,detail:true} ]
+  },
+  {
+    key: 'kotosen',
+    caption: { ja:'琴線', en:'Heartstrings' },
+    story: {
+      ja:'眩い光の中で、私は意識を取り戻した。どれだけの時間が経過したのだろうか。私が誰で、どこから来て、今どこにいるのか。方向感覚さえも失っていた。現実なのか幻想か、それを判断する感覚の糸を手繰り寄せようとした。何かを動かそうとしたが、手応えはなく、ただ空虚が広がるばかりだった。\n\nその時、言葉にできない音がした。それは光の音だった。美しい色の音が、まっすぐなラインを描き、私の感覚を眩しくとらえた。',
+      en:"In a dazzling light, I regained consciousness. How much time had passed? Who I was, where I had come from, where I was now \u2014 I had lost even my sense of direction. I tried to grasp at some thread of feeling that could tell reality from illusion. I reached out to move something, but there was no resistance, nothing to hold onto \u2014 only emptiness spreading around me.\n\nThen came a sound I couldn't put into words. It was the sound of light. A beautiful, colored sound traced a straight line, and caught my senses in its dazzling brightness."
+    },
+    images: [ {src:DATA.kotosen_1,detail:false}, {src:DATA.kotosen_2,detail:true}, {src:DATA.kotosen_3,detail:true} ]
+  },
+  {
+    key: 'milkyway',
+    caption: { ja:'ミルキーウェイ', en:'Milky Way' },
+    story: {
+      ja:'ガンジス川沿いの一室から、窓にかかる朽ちそうなほど古いサリー越しに透けて見える風景。川岸を歩く白い牛がぼんやりと見える。この牛は、静かな朝の光の中で、ゆったりとした歩みを続けている。その背後では、ガンジス川がゆっくりと流れ、古代から続く生命のリズムを刻んでいる。\n\n夜が訪れれば、この川も水面にミルキーウェイを映し出し、まるで無数の星々で沐浴しているかのようにキラキラと輝く。双子の星がじゃれあいながら笑うように瞬いている。',
+      en:'From a room beside the Ganges, the view filters through a sari hung at the window, worn thin with age, nearly ready to crumble. A white cow can be made out, walking slowly along the riverbank in the quiet morning light. Behind it, the Ganges flows on, keeping the rhythm of life that has continued since ancient times.\n\nWhen night comes, the river mirrors the Milky Way on its surface, sparkling as if bathing in countless stars. Twin stars twinkle together, as if laughing and playing.'
+    },
+    images: [ {src:DATA.milkyway_1,detail:false}, {src:DATA.milkyway_2,detail:true}, {src:DATA.milkyway_3,detail:true} ]
+  },
+  {
+    key: 'phantom',
+    caption: { ja:'幻影', en:'Phantom' },
+    story: {
+      ja:'月が美しく輝く夜、森の奥深くに隠された秘密の湖がある。そこは不思議なものが現れるとされる場所だ。ある夜、一匹の馬が森に迷い込み、霧が立ち込める静かな湖のほとりにたどりつく。波紋の広がる水面に月の光が眩しく揺らめいている。\n\n水面に現れた白い影は、月の光を浴び幻想的に輝いていた。',
+      en:"On a night when the moon shines beautifully, deep in the forest lies a hidden, secret lake. It is said to be a place where strange, mysterious things appear. One night, a horse wanders into the forest and arrives at the misty, quiet edge of the lake. Moonlight shimmers dazzlingly across the rippling water.\n\nA white shadow appeared on the water's surface, glowing dreamlike, bathed in moonlight."
+    },
+    images: [ {src:DATA.phantom_1,detail:false}, {src:DATA.phantom_2,detail:true}, {src:DATA.phantom_3,detail:true} ]
+  },
+  {
+    key: 'eyes',
+    caption: { ja:'eyes', en:'eyes' },
+    story: {
+      ja:'いつも気づくと、それはそこにいる。あの時も、あの瞬間も、そして暗闇の中でも。私が気づかないふりをしていても、それは存在している。その目は、常に私の心をじっと見つめている。私が何を感じ、どう反応し、そしてどう在るかを確かめるように。\n\n私はおそるおそる、その方向をうっすらと見据える。そこには、決して避けられない真実の目が私の心を映しだしていた。',
+      en:'Whenever I notice, it is there. In that moment, and that one, and even in the dark. Even when I pretend not to notice, it exists. Those eyes are always watching my heart closely, as if to confirm what I feel, how I react, and who I am.\n\nCautiously, I look, faintly, toward that direction. There, an inescapable, truthful eye was reflecting my heart.'
+    },
+    images: [ {src:DATA.eyes_1,detail:false}, {src:DATA.eyes_2,detail:true}, {src:DATA.eyes_3,detail:true} ]
+  },
+  {
+    key: 'oldmirror',
+    caption: { ja:'古い鏡', en:'Old Mirror' },
+    story: {
+      ja:'とても古いアンティークミラー。その鏡は長いあいだいろんなものを映し出して来た。\n\n年月とともに表面には細かい無数の傷がつき、すりガラスのように鮮明さは失われ、流れる風景をぼんやりと曖昧に映す。それがいつも、どこかドラマティックに味わい深く、映すものに趣や愛おしさを与える。まるで過ぎた過去の記憶がやけに美しく輝くように。',
+      en:'A very old antique mirror. For a long time, it has reflected all kinds of things.\n\nWith the years, countless fine scratches have gathered on its surface, and like ground glass, it has lost its clarity \u2014 reflecting the passing scenery only vaguely, softly blurred. And somehow, this always feels a little dramatic, rich with character, lending whatever it reflects a quiet charm, a quiet tenderness. As if memories of a bygone past shine, oddly, all the more beautiful.'
+    },
+    images: [ {src:DATA.oldmirror_1,detail:false}, {src:DATA.oldmirror_2,detail:true}, {src:DATA.oldmirror_3,detail:true} ]
+  },
+  {
+    key: 'mold',
+    caption: { ja:'白カビと黒カビ', en:'White Mold and Black Mold' },
+    story: {
+      ja:'白カビは食べ物を美味しくし、それを食べた人間や動物は元気になった。黒カビは食べ物を毒にした。それを食べた人間や動物を病気にしたり殺した。死んだ人間や動物はやがて黒カビに覆われた。そして大きな黒カビは全てをバラバラにした。やがてそれは土になった。その土から命が生まれた。',
+      en:'White mold made food delicious, and the people and animals who ate it grew strong. Black mold turned food to poison. It made the people and animals who ate it sick, or killed them. The dead, in time, were covered by black mold. And the great black mold broke everything apart. In time, it became soil. From that soil, life was born.'
+    },
+    images: [ {src:DATA.mold_1,detail:false}, {src:DATA.mold_2,detail:true}, {src:DATA.mold_3,detail:true} ]
+  },
+  {
+    key: 'alice',
+    caption: { ja:'アリス', en:'Alice' },
+    story: {
+      ja:'体の芯の奥深く、透明な細い紐から発信した信号、その振動がエネルギー運動へと変わった瞬間、微弱な電気が発生した。この微弱な電流は、周囲のごく微細な粒子の形を変化させた。ほとんど見えないほど小さな電気をまとった粒の集合が空間を柔らかく飽和させ、全体をおぼろげに包み込んでいく。\n\n心の目でこの美しい光を捉えると、揺らめく粒子の幕が自由自在に形を変えながら、自分にそっくりな世界を映し出した。この世界では、自分の発した感情の波が物理的な形となって現れる。感じたこと、知ったこと、それが真実だと認めたことが即座に視覚化され、この微細なエネルギー運動によって創り出される幻想的な光景は、私が住むワンダーランドなのだ。',
+      en:"Deep within the core of the body, a signal was sent out from a thin, transparent thread. The instant its vibration turned into a movement of energy, a faint electric charge was generated. This weak current changed the shape of the tiniest particles around it. A gathering of barely visible grains, each carrying a trace of electricity, softly saturated the space, wrapping everything in a hazy glow.\n\nSeen through the mind's eye, this beautiful light \u2014 a shimmering curtain of particles, freely shifting its shape \u2014 reflected a world that looked exactly like myself. In this world, the waves of emotion I send out take on physical form. What I feel, what I come to know, what I accept as true, is instantly made visible. This fantastical scene, created by that fine movement of energy, is the Wonderland I live in."
+    },
+    images: [ {src:DATA.alice_1,detail:false}, {src:DATA.alice_2,detail:true}, {src:DATA.alice_3,detail:true} ]
+  },
+  {
+    key: 'neon',
+    caption: { ja:'ネオン', en:'Neon' },
+    story: {
+      ja:'風化したショッピングモールの看板のネオン管、「O」の文字がやけに眩しく光る。ここには何一つ私の心をときめかせるものはないのに、光に群がる虫のように惹きつけられる。子供の頃、夜布団に入って、寝る前に眺めた蛍光管の照明を思い出す。\n\n消えてもなお残像を残すまあるい輪。眠った後、またちゃんと目覚められるだろうか。\n\nもし目覚めなかったとしたら、ちゃんと私の頭上にもリングが輝くだろうか。そんなことを考えると、なかなか上手く寝ることができなかった。\n\nもし天国やあの世と言われる場所が、こんなショッピングモールなら退屈で行く気にはなれない。どれだけフィードが「homegoing」で埋まっても。',
+      en:'The neon tube of a weathered shopping mall sign \u2014 the letter "O" glows oddly bright. There\u2019s nothing here that could make my heart race, and yet I\u2019m drawn to it, like a moth swarming toward the light. It reminds me of the fluorescent light I used to watch from bed as a kid, before falling asleep.\n\nA round ring that leaves an afterimage even once it\u2019s gone dark. After I fall asleep, will I really wake up again?\n\nAnd if I don\u2019t wake up, will a ring glow above my head too? Thinking about that, I could never quite manage to fall asleep.\n\nIf heaven, or whatever they call the other side, turns out to be a shopping mall like this, I don\u2019t think I\u2019d want to go \u2014 no matter how much the feed fills up with \u201chomegoing.\u201d'
+    },
+    images: [ {src:DATA.neon_1,detail:false}, {src:DATA.neon_2,detail:true}, {src:DATA.neon_3,detail:true} ]
+  },
+  {
+    key: 'membrane',
+    caption: { ja:'膜', en:'Membrane' },
+    story: {
+      ja:'キャンバスに描かれた世界、それは平面だろうか、立体だろうか。地球は平面だろうか、球体だろうか。双方を分け隔てる薄い膜。それで世界を覆っている。見たこと、感じたこと、そうだと信じたことを包む膜。',
+      en:'The world painted on the canvas \u2014 is it flat, or is it dimensional? Is the earth flat, or is it round? A thin membrane divides the two. It covers the world. A membrane, wrapping what was seen, what was felt, what was believed to be true.'
+    },
+    images: [ {src:DATA.membrane_1,detail:false}, {src:DATA.membrane_2,detail:true}, {src:DATA.membrane_3,detail:true} ]
+  },
+];
+
+// ---- ここまでが「作品データ」。新しい作品はこの上の並びに追加してください ----
+
+let currentDream = null;
+let deck = [];
+let pinnedKey = null; // ?piece=xxx が指定されている場合、そのキーが入る
+
+function getPinnedKeyFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const piece = params.get('piece');
+  if (piece && dreams.some(d => d.key === piece)) return piece;
+  return null;
+}
+
+function refillDeck(avoidIndex) {
+  deck = dreams.map((_, i) => i);
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  if (avoidIndex !== undefined && deck[deck.length - 1] === avoidIndex && deck.length > 1) {
+    [deck[deck.length - 1], deck[0]] = [deck[0], deck[deck.length - 1]];
+  }
+}
+
+function nextDreamIndex() {
+  if (deck.length === 0) {
+    refillDeck(lastIndex);
+  }
+  const idx = deck.pop();
+  lastIndex = idx;
+  return idx;
+}
+
+let lastIndex = undefined;
+function applyLangTexts() {
+  const t = ui[lang];
+  document.getElementById('againText').textContent = t.again;
+  document.getElementById('swipeHint').textContent = t.swipeHint;
+  const storyText = document.getElementById('storyText');
+  const storyToggle = document.getElementById('storyToggle');
+  const isOpen = storyText.classList.contains('open');
+  storyToggle.textContent = isOpen ? t.toggleOpen : t.toggleClosed;
+  if (currentDream) {
+    document.getElementById('caption').textContent = currentDream.caption[lang];
+    storyText.textContent = currentDream.story[lang];
+  }
+  renderPinnedNote();
+}
+
+function renderPinnedNote() {
+  const note = document.getElementById('pinnedNote');
+  if (pinnedKey) {
+    const t = ui[lang];
+    note.innerHTML = t.pinned + '<a href="' + window.location.pathname + '">' + t.pinnedLink + '</a>';
+  } else {
+    note.innerHTML = '';
+  }
+}
+
+function updateDots() {
+  const imgsEl = document.getElementById('imgs');
+  const dots = document.querySelectorAll('#dots span');
+  const idx = Math.round(imgsEl.scrollLeft / imgsEl.clientWidth);
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  document.getElementById('prevArrow').classList.toggle('hidden', idx <= 0);
+  document.getElementById('nextArrow').classList.toggle('hidden', idx >= dots.length - 1);
+}
+
+function goToSlide(delta) {
+  const imgsEl = document.getElementById('imgs');
+  imgsEl.scrollBy({ left: imgsEl.clientWidth * delta, behavior:'smooth' });
+}
+
+function renderDream(dream) {
+  const imgsEl = document.getElementById('imgs');
+  const dotsEl = document.getElementById('dots');
+  imgsEl.innerHTML = '';
+  dotsEl.innerHTML = '';
+  currentDream = dream;
+  dream.images.forEach((im, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    const img = document.createElement('img');
+    img.src = im.src;
+    slide.appendChild(img);
+    imgsEl.appendChild(slide);
+
+    const dot = document.createElement('span');
+    if (i === 0) dot.classList.add('active');
+    dotsEl.appendChild(dot);
+  });
+  imgsEl.scrollLeft = 0;
+  updateDots();
+  applyLangTexts();
+}
+
+function showFirst() {
+  if (pinnedKey) {
+    // QRコード経由：その作品固定で表示し、「次へ」は押せないようにする
+    const dream = dreams.find(d => d.key === pinnedKey);
+    renderDream(dream);
+    document.getElementById('again').style.display = 'none';
+  } else {
+    const dream = dreams[nextDreamIndex()];
+    renderDream(dream);
+  }
+}
+
+function renderRandom() {
+  if (pinnedKey) return; // ピン留め表示中は「次へ」を無効化
+  const storyText = document.getElementById('storyText');
+  storyText.classList.remove('open');
+  window.scrollTo(0, 0);
+  showFirst();
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('imgs').addEventListener('scroll', updateDots);
+
+document.getElementById('imgs').addEventListener('wheel', (e) => {
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault();
+    document.getElementById('imgs').scrollLeft += e.deltaY;
+  }
+}, { passive:false });
+
+document.getElementById('prevArrow').addEventListener('click', () => goToSlide(-1));
+document.getElementById('nextArrow').addEventListener('click', () => goToSlide(1));
+
+document.getElementById('storyToggle').addEventListener('click', () => {
+  const storyText = document.getElementById('storyText');
+  storyText.classList.toggle('open');
+  applyLangTexts();
+});
+
+document.getElementById('again').addEventListener('click', renderRandom);
+
+document.getElementById('langJa').addEventListener('click', () => {
+  lang = 'ja';
+  document.getElementById('langJa').classList.add('active');
+  document.getElementById('langEn').classList.remove('active');
+  applyLangTexts();
+});
+document.getElementById('langEn').addEventListener('click', () => {
+  lang = 'en';
+  document.getElementById('langEn').classList.add('active');
+  document.getElementById('langJa').classList.remove('active');
+  applyLangTexts();
+});
+
+pinnedKey = getPinnedKeyFromURL();
+showFirst();
+</script>
+
+</body>
+
+</html>
